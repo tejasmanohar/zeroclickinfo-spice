@@ -4,8 +4,9 @@ package DDG::Spice::Namecheap;
 use DDG::Spice;
 use Data::Validate::Domain qw(is_domain);
 use List::Util qw(pairmap);
+use URI::Escape;
 
-spice is_cached => 0; # do not cache query
+spice proxy_cache_valid => '418 1d';
 
 
 my $namecheap_endpoint = 'http://api.namecheap.com/xml.response';
@@ -23,8 +24,14 @@ my @query_list = (
     DomainList => '$1',                                    # argument to method
 );
 
-my $query_url = "$namecheap_endpoint?". join('&', pairmap { "$a=$b" } @query_list );
-spice to => "https://duckduckgo.com/x.js?u=$query_url";
+my $query_url = uri_escape("$namecheap_endpoint?") . join( uri_escape('&'), pairmap {
+        # the param must always be escaped
+        my $param = uri_escape("$a=");
+        # the value must not be escaped if it is part of the environment or argument
+        my $val = $b;
+        "$param$val";
+    } @query_list );
+spice to => "https://duckduckgo.com/x.js?u=" . $query_url;
 
 spice wrap_jsonp_callback => 1;
 

@@ -9,16 +9,17 @@
             return Spice.failed('namecheap');
         }
 
-        var item = $( $.parseXML(api_result) ).find('DomainCheckResult');
+        var item = api_result.ApiResponse.CommandResponse.DomainCheckResult;
+
 
         if (!item) {
             if(is_debug) console.log('Parsed response does not contain DomainCheckResult');/*DEBUG*/
             return Spice.failed('namecheap');
         }
 
-        /* extract data from XML attributes */
-        var available = item.attr('Available');
-        var domainName = item.attr('Domain');
+        /* extract data from JSON */
+        var available = item.Available;
+        var domainName = item.Domain;
 
         if ( !available || !domainName ) {
             if(is_debug) console.log('DomainCheckResult does not return availability');/*DEBUG*/
@@ -39,8 +40,14 @@
                 sourceName       : 'Namecheap',
                 sourceUrl        : "https://www.namecheap.com/domains/registration/results.aspx?domain=" + domainName
             },
+            normalize: function(item) {
+                return {
+                    title: item.domainName,
+                    subtitle: "Namecheap Domain Search"
+                };
+            },
             templates: {
-                group: 'base',
+                group: 'text',
                 options:{
                     content: Spice.namecheap.namecheap,
                     moreAt: true
